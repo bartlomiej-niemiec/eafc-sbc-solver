@@ -97,8 +97,7 @@ class EaFcSbcSolver:
         for i in range(self._no_cards):
             is_league = [self._model.NewBoolVar(f'Is_League_{i}') for i in range(max_leagues)]
             for j in range(max_leagues):
-                self._model.add(league_vars[j] == league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]).OnlyEnforceIf(is_league[j])
+                self._model.add(league_vars[j] == league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]).OnlyEnforceIf(is_league[j])
             self._model.AddBoolOr(is_league).OnlyEnforceIf(self._cards_bools_vars[i])
 
     def set_max_nations_for_solution(self, max_nations):
@@ -110,16 +109,27 @@ class EaFcSbcSolver:
         for i in range(self._no_cards):
             is_nation = [self._model.NewBoolVar(f'Is_Nation_{i}') for i in range(max_nations)]
             for j in range(max_nations):
-                self._model.add(nation_vars[j] == nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]).OnlyEnforceIf(is_nation[j])
+                self._model.add(nation_vars[j] == nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]).OnlyEnforceIf(is_nation[j])
             self._model.AddBoolOr(is_nation).OnlyEnforceIf(self._cards_bools_vars[i])
 
     def set_min_overall_of_squad(self, overall):
         if not (0 <= overall <= 99):
             raise SolverExceptions.IncorrectOverallValue("Overall should be in range 0 - 99")
-        self._model.add(TeamOverallCalculator.calculate(
-            [self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i] for i in range(self._no_cards) if
-             self._cards_bools_vars[i]]) >= overall)
+
+        if self._no_players is None:
+            raise SolverExceptions.IncorrectFormation("Formation has to be set")
+
+        for i in range(self._no_cards):
+
+            overall_player = [self._model.NewIntVar(0, 99, f"player_{i}_overall") for i in range(self._no_players)]
+
+            for j in range(len(overall_player)):
+
+                self._model.Add(overall_player[j] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(self._cards_bools_vars[i])
+
+            self._model.Add(
+                sum(overall_player) >= overall * 11
+            )
 
     def solve(self):
         if not self._formation:
@@ -158,6 +168,7 @@ class EaFcSbcSolver:
         print('++++++++++++++++++++++++++++++++')
         print(f"Futwiz Link: {player_df[CsvHeaders.FutwizLink]}")
         print(f"Player Name: {player_df[CsvHeaders.Name]}")
+        print(f"Player Overall Rating: {player_df[CsvHeaders.OverallRating]}")
         print(f"Card Price: {player_df[CsvHeaders.Price]}")
         print(f"Card Version: {player_df[CsvHeaders.Version]}")
         print(f"League: {player_df[CsvHeaders.League]}")
