@@ -13,6 +13,12 @@ if __name__ == "__main__":
     sbc_solver = EaFcSbcSolver(players_df)
     sbc_solver.set_formation([0] * 11)
     sbc_solver.set_min_overall_of_squad(82)
-    sbc_solver.set_how_many_cards_with_overall(3, 86)
+    sbc_solver.set_how_many_players_from_club("FC Barcelona", 3)
+    sbc_solver.solve()
+    sbc_solver.print_solution()
+
+    sbc_solver.reset()
+    sbc_solver.set_formation([0] * 11)
+    sbc_solver.set_min_overall_of_squad(83)
     sbc_solver.solve()
     sbc_solver.print_solution()

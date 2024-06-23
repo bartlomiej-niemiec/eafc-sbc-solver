@@ -7,6 +7,7 @@ from typing import List
 
 
 class EaFcSbcSolver:
+
     _MAX_PLAYERS_IN_FORMATION = 11
 
     def __init__(self, ea_fc_cards_df):
@@ -130,17 +131,15 @@ class EaFcSbcSolver:
 
         players_with_min_overall = int(0.64 * self._no_players)
 
+        overall_player = [self._model.NewIntVar(0, 99, f"player_{i}_overall") for i in range(self._no_cards)]
+
         for i in range(self._no_cards):
+            self._model.Add(overall_player[i] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(self._cards_bools_vars[i])
+            self._model.Add(overall_player[i] == 0).OnlyEnforceIf(self._cards_bools_vars[i].Not())
 
-            overall_player = [self._model.NewIntVar(0, 99, f"player_{i}_overall") for i in range(self._no_players)]
-
-            for j in range(len(overall_player)):
-
-                self._model.Add(overall_player[j] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(self._cards_bools_vars[i])
-
-            self._model.Add(
-                sum(overall_player) >= ((int(overall) * players_with_min_overall) + ((self._no_players - players_with_min_overall) * (overall - 2)))
-            )
+        self._model.Add(
+            sum(overall_player) >= ((int(overall) * players_with_min_overall) + ((self._no_players - players_with_min_overall) * (overall - 1)))
+        )
 
     def solve(self):
         if not self._formation:
@@ -174,6 +173,15 @@ class EaFcSbcSolver:
                                 self._solver.Value(self._cards_bools_vars[i])]
 
         return solution_players
+
+    def reset(self):
+        ea_fc_cards_temp = self._ea_fc_cards_df
+        del self._model
+        del self._solver
+        del self._ea_fc_cards_df
+        del self._no_cards
+        del self._cards_bools_vars
+        self.__init__(ea_fc_cards_temp)
 
     def _print_player(self, player_df):
         print('++++++++++++++++++++++++++++++++')
