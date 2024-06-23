@@ -12,6 +12,7 @@ if __name__ == "__main__":
 
     sbc_solver = EaFcSbcSolver(players_df)
     sbc_solver.set_formation([0] * 11)
-    sbc_solver.set_min_overall_of_squad(85)
+    sbc_solver.set_min_overall_of_squad(82)
+    sbc_solver.set_how_many_cards_with_overall(3, 86)
     sbc_solver.solve()
     sbc_solver.print_solution()

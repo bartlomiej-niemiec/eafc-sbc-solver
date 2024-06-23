@@ -88,6 +88,15 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
+    def set_how_many_cards_with_overall(self, no_players, overall):
+        self._model.add(
+            sum(
+                (1 if self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i] == overall else 0) *
+                self._cards_bools_vars[i] for
+                i in range(self._no_cards)
+            ) >= no_players
+        )
+
     def set_max_leagues_for_solution(self, max_leagues):
         leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
         league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
@@ -119,6 +128,8 @@ class EaFcSbcSolver:
         if self._no_players is None:
             raise SolverExceptions.IncorrectFormation("Formation has to be set")
 
+        players_with_min_overall = int(0.64 * self._no_players)
+
         for i in range(self._no_cards):
 
             overall_player = [self._model.NewIntVar(0, 99, f"player_{i}_overall") for i in range(self._no_players)]
@@ -128,7 +139,7 @@ class EaFcSbcSolver:
                 self._model.Add(overall_player[j] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(self._cards_bools_vars[i])
 
             self._model.Add(
-                sum(overall_player) >= overall * 11
+                sum(overall_player) >= ((int(overall) * players_with_min_overall) + ((self._no_players - players_with_min_overall) * (overall - 2)))
             )
 
     def solve(self):
