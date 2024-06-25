@@ -26,7 +26,7 @@ class EaFcSbcSolver:
         self._formation = formation
         self._no_players = len(formation)
 
-    def set_how_many_players_from_club(self, club: str, no_players):
+    def set_min_cards_with_club(self, club: str, no_players):
         club_arr = self._ea_fc_cards_df[CsvHeaders.Club].unique()
         club_map_to_unique_id = self._get_map_attribute_to_number(club_arr)
         if not club_map_to_unique_id.get(club):
@@ -39,7 +39,7 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
-    def set_how_many_players_from_nation(self, nation: str, no_players):
+    def set_min_cards_with_nation(self, nation: str, no_players):
         nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
         nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
         if not nation_map_to_unique_id.get(nation):
@@ -52,7 +52,7 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
-    def set_how_many_players_from_league(self, league: str, no_players):
+    def set_min_cards_with_league(self, league: str, no_players):
         league_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
         league_map_to_unique_id = self._get_map_attribute_to_number(league_arr)
         if not league_map_to_unique_id.get(league):
@@ -65,7 +65,7 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
-    def set_how_many_players_from_version(self, version: str, no_players):
+    def set_min_cards_with_version(self, version: str, no_players):
         version_arr = self._ea_fc_cards_df[CsvHeaders.Version].unique()
         version_map_to_unique_id = self._get_map_attribute_to_number(version_arr)
         if not version_map_to_unique_id.get(version):
@@ -79,7 +79,7 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
-    def set_how_many_rare_cards(self, no_players):
+    def set_min_rare_cards(self, no_players):
         self._model.add(
             sum(
                 (1 if self._is_card_version_rare(self._ea_fc_cards_df[CsvHeaders.Version].iloc[i].strip()) else 0) *
@@ -88,7 +88,7 @@ class EaFcSbcSolver:
             ) >= no_players
         )
 
-    def set_how_many_cards_with_overall(self, no_players, overall):
+    def set_min_cards_with_overall(self, no_players, overall):
         self._model.add(
             sum(
                 (1 if self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i] == overall else 0) *
@@ -123,7 +123,7 @@ class EaFcSbcSolver:
                     self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]).OnlyEnforceIf(is_nation[j])
             self._model.AddBoolOr(is_nation).OnlyEnforceIf(self._cards_bools_vars[i])
 
-    def set_how_many_unique_leagues(self, no_leagues):
+    def set_min_unique_leagues(self, no_leagues):
         leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
         league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
 
@@ -135,7 +135,7 @@ class EaFcSbcSolver:
 
         self._model.add(sum(is_league_bool) >= no_leagues)
 
-    def set_how_many_unique_nations(self, no_nations):
+    def set_min_unique_nations(self, no_nations):
         nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
         nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
 
@@ -179,7 +179,7 @@ class EaFcSbcSolver:
         # No. players searched
         self._model.Add(sum(self._cards_bools_vars) == self._no_players)
 
-        # Formation constraint: TO DO
+        # Formation constraint
         self._add_constraint_to_formation()
 
         # Objective
