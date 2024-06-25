@@ -17,6 +17,8 @@ class EaFcSbcSolver:
                                   range(self._no_cards)]
         self._no_players = None
         self._formation = None
+        self._unique_leagues_bools = None
+        self._unique_nationality_bools = None
         self._solved = True
 
     def set_formation(self, formation: List[str]):
@@ -124,28 +126,40 @@ class EaFcSbcSolver:
             self._model.AddBoolOr(is_nation).OnlyEnforceIf(self._cards_bools_vars[i])
 
     def set_min_unique_leagues(self, no_leagues):
-        leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
-        league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
+        if not self._unique_leagues_bools:
+            self._init_unique_leagues()
 
-        is_league_bool = [self._model.NewBoolVar(f"Is_League_{i}") for i in range(len(leagues_arr))]
+        self._model.add(sum(self._unique_leagues_bools) >= no_leagues)
 
-        for i in range(len(is_league_bool)):
-            self._model.add(sum([(1 if league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(is_league_bool[i])
-            self._model.add(sum([(1 if league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(is_league_bool[i].Not())
+    def set_max_unique_leagues(self, no_leagues):
+        if not self._unique_leagues_bools:
+            self._init_unique_leagues()
 
-        self._model.add(sum(is_league_bool) >= no_leagues)
+        self._model.add(sum(self._unique_leagues_bools) < no_leagues)
+
+    def set_exact_unique_leagues(self, no_leagues):
+        if not self._unique_leagues_bools:
+            self._init_unique_leagues()
+
+        self._model.add(sum(self._unique_leagues_bools) == no_leagues)
 
     def set_min_unique_nations(self, no_nations):
-        nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
-        nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
+        if not self._unique_nationality_bools:
+            self._init_unique_nations()
 
-        is_nation_bool = [self._model.NewBoolVar(f"Is_Nation_{i}") for i in range(len(nation_arr))]
+        self._model.add(sum(self._unique_nationality_bools) >= no_nations)
 
-        for i in range(len(is_nation_bool)):
-            self._model.add(sum([(1 if nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(is_nation_bool[i])
-            self._model.add(sum([(1 if nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(is_nation_bool[i].Not())
+    def set_max_unique_nations(self, no_nations):
+        if not self._unique_nationality_bools:
+            self._init_unique_nations()
 
-        self._model.add(sum(is_nation_bool) >= no_nations)
+        self._model.add(sum(self._unique_nationality_bools) < no_nations)
+
+    def set_exact_unique_nations(self, no_nations):
+        if not self._unique_nationality_bools:
+            self._init_unique_nations()
+
+        self._model.add(sum(self._unique_nationality_bools) == no_nations)
 
     def set_min_team_chemistry(self, chemistry):
         # TO DO
@@ -269,3 +283,32 @@ class EaFcSbcSolver:
                     range(self._no_cards)
                 ) == value
             )
+
+    def _init_unique_leagues(self):
+        leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
+        league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
+        self._unique_leagues_bools = [self._model.NewBoolVar(f"Is_League_{i}") for i in range(len(leagues_arr))]
+
+        for i in range(len(self._unique_leagues_bools)):
+            self._model.add(sum([(1 if league_map_to_unique_id[
+                                           self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) *
+                                 self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(
+                self._unique_leagues_bools[i])
+            self._model.add(sum([(1 if league_map_to_unique_id[
+                                           self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) *
+                                 self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(
+                self._unique_leagues_bools[i].Not())
+
+    def _init_unique_nations(self):
+        nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
+        nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
+        self._unique_nationality_bools = [self._model.NewBoolVar(f"Is_Nation_{i}") for i in range(len(nation_arr))]
+        for i in range(len(self._unique_nationality_bools)):
+            self._model.add(sum([(1 if nation_map_to_unique_id[
+                                           self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) *
+                                 self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(
+                self._unique_nationality_bools[i])
+            self._model.add(sum([(1 if nation_map_to_unique_id[
+                                           self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) *
+                                 self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(
+                self._unique_nationality_bools[i].Not())
