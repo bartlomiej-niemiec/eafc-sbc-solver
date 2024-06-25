@@ -1,13 +1,11 @@
 from ortools.sat.python import cp_model
 from src.csv.csv_utils import CsvHeaders
 import src.sbc_solver.exceptions as SolverExceptions
-from src.utils.team_overall_calculator import TeamOverallCalculator
 
 from typing import List
 
 
 class EaFcSbcSolver:
-
     _MAX_PLAYERS_IN_FORMATION = 11
 
     def __init__(self, ea_fc_cards_df):
@@ -21,12 +19,12 @@ class EaFcSbcSolver:
         self._formation = None
         self._solved = True
 
-    def set_formation(self, list_of_position: List[str]):
-        if len(list_of_position) > self._MAX_PLAYERS_IN_FORMATION:
+    def set_formation(self, formation: List[str]):
+        if len(formation) > self._MAX_PLAYERS_IN_FORMATION:
             raise SolverExceptions.IncorrectFormation(
                 f"Too many players in formation. Max players per formation = {EaFcSbcSolver._MAX_PLAYERS_IN_FORMATION}")
-        self._formation = list_of_position
-        self._no_players = len(list_of_position)
+        self._formation = formation
+        self._no_players = len(formation)
 
     def set_how_many_players_from_club(self, club: str, no_players):
         club_arr = self._ea_fc_cards_df[CsvHeaders.Club].unique()
@@ -75,7 +73,8 @@ class EaFcSbcSolver:
 
         self._model.add(
             sum(
-                (1 if self._ea_fc_cards_df[CsvHeaders.Version].iloc[i] == version else 0) * self._cards_bools_vars[i] for
+                (1 if self._ea_fc_cards_df[CsvHeaders.Version].iloc[i].strip() == version else 0) *
+                self._cards_bools_vars[i] for
                 i in range(self._no_cards)
             ) >= no_players
         )
@@ -83,7 +82,7 @@ class EaFcSbcSolver:
     def set_how_many_rare_cards(self, no_players):
         self._model.add(
             sum(
-                (1 if self._is_card_version_rare(self._ea_fc_cards_df[CsvHeaders.Version].iloc[i]) else 0) *
+                (1 if self._is_card_version_rare(self._ea_fc_cards_df[CsvHeaders.Version].iloc[i].strip()) else 0) *
                 self._cards_bools_vars[i] for
                 i in range(self._no_cards)
             ) >= no_players
@@ -107,7 +106,8 @@ class EaFcSbcSolver:
         for i in range(self._no_cards):
             is_league = [self._model.NewBoolVar(f'Is_League_{i}') for i in range(max_leagues)]
             for j in range(max_leagues):
-                self._model.add(league_vars[j] == league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]).OnlyEnforceIf(is_league[j])
+                self._model.add(league_vars[j] == league_map_to_unique_id[
+                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]).OnlyEnforceIf(is_league[j])
             self._model.AddBoolOr(is_league).OnlyEnforceIf(self._cards_bools_vars[i])
 
     def set_max_nations_for_solution(self, max_nations):
@@ -119,8 +119,37 @@ class EaFcSbcSolver:
         for i in range(self._no_cards):
             is_nation = [self._model.NewBoolVar(f'Is_Nation_{i}') for i in range(max_nations)]
             for j in range(max_nations):
-                self._model.add(nation_vars[j] == nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]).OnlyEnforceIf(is_nation[j])
+                self._model.add(nation_vars[j] == nation_map_to_unique_id[
+                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]).OnlyEnforceIf(is_nation[j])
             self._model.AddBoolOr(is_nation).OnlyEnforceIf(self._cards_bools_vars[i])
+
+    def set_how_many_unique_leagues(self, no_leagues):
+        leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
+        league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
+
+        is_league_bool = [self._model.NewBoolVar(f"Is_League_{i}") for i in range(len(leagues_arr))]
+
+        for i in range(len(is_league_bool)):
+            self._model.add(sum([(1 if league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(is_league_bool[i])
+            self._model.add(sum([(1 if league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(is_league_bool[i].Not())
+
+        self._model.add(sum(is_league_bool) >= no_leagues)
+
+    def set_how_many_unique_nations(self, no_nations):
+        nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
+        nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
+
+        is_nation_bool = [self._model.NewBoolVar(f"Is_Nation_{i}") for i in range(len(nation_arr))]
+
+        for i in range(len(is_nation_bool)):
+            self._model.add(sum([(1 if nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) > 0).OnlyEnforceIf(is_nation_bool[i])
+            self._model.add(sum([(1 if nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) * self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(is_nation_bool[i].Not())
+
+        self._model.add(sum(is_nation_bool) >= no_nations)
+
+    def set_min_team_chemistry(self, chemistry):
+        # TO DO
+        pass
 
     def set_min_overall_of_squad(self, overall):
         if not (0 <= overall <= 99):
@@ -134,11 +163,13 @@ class EaFcSbcSolver:
         overall_player = [self._model.NewIntVar(0, 99, f"player_{i}_overall") for i in range(self._no_cards)]
 
         for i in range(self._no_cards):
-            self._model.Add(overall_player[i] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(self._cards_bools_vars[i])
+            self._model.Add(overall_player[i] == self._ea_fc_cards_df[CsvHeaders.OverallRating].iloc[i]).OnlyEnforceIf(
+                self._cards_bools_vars[i])
             self._model.Add(overall_player[i] == 0).OnlyEnforceIf(self._cards_bools_vars[i].Not())
 
         self._model.Add(
-            sum(overall_player) >= ((int(overall) * players_with_min_overall) + ((self._no_players - players_with_min_overall) * (overall - 1)))
+            sum(overall_player) >= ((int(overall) * players_with_min_overall) + (
+                    (self._no_players - players_with_min_overall) * (overall - 1)))
         )
 
     def solve(self):
@@ -161,10 +192,13 @@ class EaFcSbcSolver:
         self._solver.Solve(self._model)
 
     def print_solution(self):
+        sum_price = 0
         if self._solved:
             for i in range(self._no_cards):
                 if self._solver.Value(self._cards_bools_vars[i]):
+                    sum_price += self._ea_fc_cards_df[CsvHeaders.Price].iloc[i]
                     self._print_player(self._ea_fc_cards_df.iloc[i])
+            print(f"Final Price: {sum_price}")
 
     def get_players_in_solution(self):
         solution_players = None
@@ -198,8 +232,8 @@ class EaFcSbcSolver:
         map = {}
         val = 0
         for attr in attribute_list:
-            if attr not in map:
-                map[attr] = val
+            if attr.strip() not in map:
+                map[attr.strip()] = val
                 val += 1
         return map
 
@@ -218,8 +252,20 @@ class EaFcSbcSolver:
 
         return rare
 
-    def _is_formation_valid(self):
-        pass
-
     def _add_constraint_to_formation(self):
-        pass
+        position_to_no_players_map = {}
+        for position in self._formation:
+            if not position_to_no_players_map.get(position):
+                position_to_no_players_map[position] = 1
+            else:
+                position_to_no_players_map[position] += 1
+
+        for key, value in position_to_no_players_map.items():
+            self._model.add(
+                sum(
+                    (1 if self._ea_fc_cards_df[CsvHeaders.Position].iloc[i] == key else 0) * self._cards_bools_vars[i]
+                    for
+                    i in
+                    range(self._no_cards)
+                ) == value
+            )

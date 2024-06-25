@@ -1,6 +1,7 @@
 import pathlib
 from src.csv.csv_utils import get_csv_content, preprocess_csv_data
 from src.sbc_solver.ea_fc_sbc_solver import EaFcSbcSolver
+from src.utils.formations import Formations
 
 
 if __name__ == "__main__":
@@ -11,14 +12,8 @@ if __name__ == "__main__":
     preprocess_csv_data(players_df)
 
     sbc_solver = EaFcSbcSolver(players_df)
-    sbc_solver.set_formation([0] * 11)
-    sbc_solver.set_min_overall_of_squad(82)
-    sbc_solver.set_how_many_players_from_club("FC Barcelona", 3)
-    sbc_solver.solve()
-    sbc_solver.print_solution()
-
-    sbc_solver.reset()
-    sbc_solver.set_formation([0] * 11)
-    sbc_solver.set_min_overall_of_squad(83)
+    sbc_solver.set_formation(Formations["4-4-2"])
+    sbc_solver.set_how_many_unique_nations(11)
+    sbc_solver.set_min_overall_of_squad(81)
     sbc_solver.solve()
     sbc_solver.print_solution()
