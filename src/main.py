@@ -13,7 +13,6 @@ if __name__ == "__main__":
 
     sbc_solver = EaFcSbcSolver(players_df)
     sbc_solver.set_formation(Formations["4-4-2"])
-    sbc_solver.set_min_unique_nations(11)
-    sbc_solver.set_min_overall_of_squad(70)
+    sbc_solver.set_min_team_chemistry(15)
     sbc_solver.solve()
     sbc_solver.print_solution()
