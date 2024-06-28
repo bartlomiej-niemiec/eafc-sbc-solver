@@ -117,4 +117,10 @@ def preprocess_csv_data(players_df):
             players_df[column] = players_df[column].fillna(0)
             players_df[column] = players_df[column].astype(int)
 
+    for i in range(len(players_df)):
+        players_df.at[i, CsvHeaders.Club] = players_df[CsvHeaders.Club].iloc[i].strip()
+        players_df.at[i, CsvHeaders.Nationality] = players_df[CsvHeaders.Nationality].iloc[i].strip()
+        players_df.at[i, CsvHeaders.Version] = players_df[CsvHeaders.Version].iloc[i].strip()
+        players_df.at[i, CsvHeaders.League] = players_df[CsvHeaders.League].iloc[i].strip()
+
     players_df.drop(players_df[(players_df[CsvHeaders.Price] == 0)].index, inplace=True)
