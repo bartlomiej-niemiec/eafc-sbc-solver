@@ -168,9 +168,19 @@ class EaFcSbcSolver:
 
     def set_min_team_chemistry(self, chemistry):
 
+        # NATIONALITY
         nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
         nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
         nation_vars = [self._model.NewIntVar(0, self._no_players, f"Nation_{i}") for i in range(len(nation_arr))]
+        plus_one_same_two_nation = []
+        plus_two_same_five_nation = []
+        plus_three_same_eight_or_more_nations = []
+
+        for i in range(len(nation_arr)):
+            plus_one_same_two_nation.append(self._model.NewBoolVar(f'plus_one_same_two_nation_{i}'))
+            plus_two_same_five_nation.append(self._model.NewBoolVar(f'plus_two_same_five_nation_{i}'))
+            plus_three_same_eight_or_more_nations.append(
+                self._model.NewBoolVar(f'plus_three_same_eight_more_country_{i}'))
 
         # Calculate no. player in each nationality
         for nation_id in range(len(nation_arr)):
@@ -179,9 +189,34 @@ class EaFcSbcSolver:
                     self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]] else 0) * self._cards_bools_vars[i] for i in
                                                                    range(self._no_cards)]))
 
+            self._model.AddLinearConstraint(nation_vars[nation_id], 2, 4).OnlyEnforceIf(
+                plus_one_same_two_nation[nation_id])
+            self._model.Add(nation_vars[nation_id] < 2).OnlyEnforceIf(
+                plus_one_same_two_nation[nation_id].Not())
+
+            self._model.AddLinearConstraint(nation_vars[nation_id], 5, 7).OnlyEnforceIf(
+                plus_two_same_five_nation[nation_id])
+            self._model.Add(nation_vars[nation_id] < 5).OnlyEnforceIf(
+                plus_two_same_five_nation[nation_id].Not())
+
+            self._model.Add(nation_vars[nation_id] >= 8).OnlyEnforceIf(
+                plus_three_same_eight_or_more_nations[nation_id])
+            self._model.Add(nation_vars[nation_id] < 8).OnlyEnforceIf(
+                plus_three_same_eight_or_more_nations[nation_id].Not())
+
+        # LEAGUES
         leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
         league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
         league_vars = [self._model.NewIntVar(0, self._no_players, f"League_{i}") for i in range(len(leagues_arr))]
+
+        plus_one_same_three_league = []
+        plus_two_same_five_league = []
+        plus_three_same_eight_more_league = []
+
+        for i in range(len(leagues_arr)):
+            plus_one_same_three_league.append(self._model.NewBoolVar(f'plus_one_same_three_league_{i}'))
+            plus_two_same_five_league.append(self._model.NewBoolVar(f'plus_two_same_five_league_{i}'))
+            plus_three_same_eight_more_league.append(self._model.NewBoolVar(f'plus_three_same_eight_more_league_{i}'))
 
         # Calculate no. player in each league
         for league_id in range(len(leagues_arr)):
@@ -190,9 +225,34 @@ class EaFcSbcSolver:
                     self._ea_fc_cards_df[CsvHeaders.League].iloc[i]] else 0) * self._cards_bools_vars[i] for i in
                                                                    range(self._no_cards)]))
 
+            self._model.AddLinearConstraint(league_vars[league_id], 3, 5).OnlyEnforceIf(
+                plus_one_same_three_league[league_id])
+            self._model.Add(league_vars[league_id] < 3).OnlyEnforceIf(
+                plus_one_same_three_league[league_id].Not())
+
+            self._model.AddLinearConstraint(league_vars[league_id], 5, 7).OnlyEnforceIf(
+                plus_two_same_five_league[league_id])
+            self._model.Add(league_vars[league_id] < 5).OnlyEnforceIf(
+                plus_two_same_five_league[league_id].Not())
+
+            self._model.Add(league_vars[league_id] >= 8).OnlyEnforceIf(
+                plus_three_same_eight_more_league[league_id])
+            self._model.Add(league_vars[league_id] < 8).OnlyEnforceIf(
+                plus_three_same_eight_more_league[league_id].Not())
+
+        # CLUBS
         clubs_arr = self._ea_fc_cards_df[CsvHeaders.Club].unique()
         clubs_map_to_unique_id = self._get_map_attribute_to_number(clubs_arr)
         clubs_vars = [self._model.NewIntVar(0, self._no_players, f"Club_{i}") for i in range(len(clubs_arr))]
+
+        plus_one_same_two_club = []
+        plus_two_same_four_club = []
+        plus_three_same_seven_club = []
+
+        for i in range(len(clubs_arr)):
+            plus_one_same_two_club.append(self._model.NewBoolVar(f'plus_one_same_two_club_{i}'))
+            plus_two_same_four_club.append(self._model.NewBoolVar(f'plus_two_same_four_club_{i}'))
+            plus_three_same_seven_club.append(self._model.NewBoolVar(f'plus_three_same_seven_club_{i}'))
 
         # Calculate no. player in each Club
         for club_id in range(len(clubs_arr)):
@@ -200,125 +260,58 @@ class EaFcSbcSolver:
                 self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]] else 0) * self._cards_bools_vars[i] for i in
                                                                             range(self._no_cards)]))
 
+            self._model.AddLinearConstraint(clubs_vars[club_id], 2, 4).OnlyEnforceIf(plus_one_same_two_club[club_id])
+            self._model.Add(clubs_vars[club_id] < 2).OnlyEnforceIf(plus_one_same_two_club[club_id].Not())
+
+            self._model.AddLinearConstraint(clubs_vars[club_id], 4, 6).OnlyEnforceIf(plus_two_same_four_club[club_id])
+            self._model.Add(clubs_vars[club_id] < 4).OnlyEnforceIf(
+                plus_two_same_four_club[club_id].Not())
+
+            self._model.Add(clubs_vars[club_id] >= 7).OnlyEnforceIf(plus_three_same_seven_club[club_id])
+            self._model.Add(clubs_vars[club_id] < 7).OnlyEnforceIf(
+                plus_three_same_seven_club[club_id].Not())
+
         for i in range(self._no_cards):
 
             if self._ea_fc_cards_df[CsvHeaders.Position].iloc[i] not in self._formation:
                 self._model.add(self._player_chemistry[i] == 0)
             else:
 
-                plus_one_same_two_club = self._model.NewBoolVar(f'plus_one_same_two_club_{i}')
-                plus_one_same_two_nation = self._model.NewBoolVar(f'plus_one_same_two_nation_{i}')
-                plus_one_same_three_league = self._model.NewBoolVar(f'plus_one_same_three_league_{i}')
-                plus_two_same_four_club = self._model.NewBoolVar(f'plus_two_same_four_club_{i}')
-                plus_two_same_five_nation = self._model.NewBoolVar(f'plus_two_same_five_nation_{i}')
-                plus_two_same_five_league = self._model.NewBoolVar(f'plus_two_same_five_league_{i}')
-                plus_three_same_seven_club = self._model.NewBoolVar(f'plus_three_same_seven_club_{i}')
-                plus_three_same_eight_more_country = self._model.NewBoolVar(f'plus_three_same_eight_more_country_{i}')
-                plus_three_same_eight_more_league = self._model.NewBoolVar(f'plus_three_same_eight_more_league_{i}')
-
-                # ----------------------------1---------------------------------
-                self._model.AddLinearConstraint(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]], 2, 4).OnlyEnforceIf(plus_one_same_two_club)
-
-                self._model.Add(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]] < 2).OnlyEnforceIf(plus_one_same_two_club.Not())
-
-                # ---------------------------2---------------------------------
-                self._model.AddLinearConstraint(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]], 2, 4).OnlyEnforceIf(
-                    plus_one_same_two_nation)
-
-                self._model.Add(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]] < 2).OnlyEnforceIf(
-                    plus_one_same_two_nation.Not())
-
-                # ---------------------------3---------------------------------
-                self._model.AddLinearConstraint(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]], 3, 5).OnlyEnforceIf(
-                    plus_one_same_three_league)
-
-                self._model.Add(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]] < 3).OnlyEnforceIf(
-                    plus_one_same_three_league.Not())
-
-                # ---------------------------4---------------------------------
-
-                self._model.AddLinearConstraint(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]], 4, 6).OnlyEnforceIf(plus_two_same_four_club)
-
-                self._model.Add(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]] < 4).OnlyEnforceIf(
-                    plus_two_same_four_club.Not())
-
-                # ---------------------------5---------------------------------
-                self._model.AddLinearConstraint(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]], 5, 7).OnlyEnforceIf(
-                    plus_two_same_five_nation)
-
-                self._model.Add(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]] < 5).OnlyEnforceIf(
-                    plus_two_same_five_nation.Not())
-
-                # ---------------------------6---------------------------------
-                self._model.AddLinearConstraint(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]], 5, 7).OnlyEnforceIf(plus_two_same_five_league)
-
-                self._model.Add(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]] < 5).OnlyEnforceIf(
-                    plus_two_same_five_league.Not())
-
-                # ---------------------------7---------------------------------
-                self._model.Add(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]] >= 7).OnlyEnforceIf(plus_three_same_seven_club)
-
-                self._model.Add(clubs_vars[clubs_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]] < 7).OnlyEnforceIf(
-                    plus_three_same_seven_club.Not())
-
-                # ---------------------------8---------------------------------
-                self._model.Add(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]] >= 8).OnlyEnforceIf(
-                    plus_three_same_eight_more_country)
-
-                self._model.Add(nation_vars[nation_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]] < 8).OnlyEnforceIf(
-                    plus_three_same_eight_more_country.Not())
-
-                # ---------------------------9---------------------------------
-                self._model.Add(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]] >= 8).OnlyEnforceIf(
-                    plus_three_same_eight_more_league)
-
-                self._model.Add(league_vars[league_map_to_unique_id[
-                    self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]] < 8).OnlyEnforceIf(
-                    plus_three_same_eight_more_league.Not())
+                card_league_id = league_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.League].iloc[i]]
+                card_nation_id = nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]
+                card_club_id = clubs_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]
 
                 at_least_one_boolean = self._model.NewBoolVar(f"add_one_{i}")
                 at_least_two_boolean = self._model.NewBoolVar(f"add_two_{i}")
                 at_least_three_boolean = self._model.NewBoolVar(f"add_three_{i}")
 
                 self._model.AddBoolOr(
-                    [plus_one_same_three_league, plus_one_same_two_club,
-                     plus_one_same_two_nation]).OnlyEnforceIf(
+                    [plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
+                     plus_one_same_two_nation[card_nation_id]]).OnlyEnforceIf(
                     at_least_one_boolean)
 
-                self._model.AddBoolAnd([plus_one_same_three_league.Not(), plus_one_same_two_club.Not(),
-                                        plus_one_same_two_nation.Not()]).OnlyEnforceIf(at_least_one_boolean.Not())
+                self._model.AddBoolAnd(
+                    [plus_one_same_three_league[card_league_id].Not(), plus_one_same_two_club[card_club_id].Not(),
+                     plus_one_same_two_nation[card_nation_id].Not()]).OnlyEnforceIf(at_least_one_boolean.Not())
 
                 self._model.AddBoolOr(
-                    [plus_two_same_four_club, plus_two_same_five_league,
-                     plus_two_same_five_nation]).OnlyEnforceIf(
+                    [plus_two_same_four_club[card_club_id], plus_two_same_five_league[card_league_id],
+                     plus_two_same_five_nation[card_nation_id]]).OnlyEnforceIf(
                     at_least_two_boolean)
 
-                self._model.AddBoolAnd([plus_two_same_four_club.Not(), plus_two_same_five_league.Not(),
-                                        plus_two_same_five_nation.Not()]).OnlyEnforceIf(at_least_two_boolean.Not())
+                self._model.AddBoolAnd(
+                    [plus_two_same_four_club[card_club_id].Not(), plus_two_same_five_league[card_league_id].Not(),
+                     plus_two_same_five_nation[card_nation_id].Not()]).OnlyEnforceIf(at_least_two_boolean.Not())
 
-                self._model.AddBoolOr([plus_three_same_eight_more_country, plus_three_same_seven_club,
-                                       plus_three_same_eight_more_league]).OnlyEnforceIf(at_least_three_boolean)
+                self._model.AddBoolOr(
+                    [plus_three_same_eight_or_more_nations[card_nation_id], plus_three_same_seven_club[card_club_id],
+                     plus_three_same_eight_more_league[card_league_id]]).OnlyEnforceIf(at_least_three_boolean)
 
                 self._model.AddBoolAnd(
-                    [plus_three_same_eight_more_country.Not(), plus_three_same_seven_club.Not(),
-                     plus_three_same_eight_more_league.Not()]).OnlyEnforceIf(at_least_three_boolean.Not())
+                    [plus_three_same_eight_or_more_nations[card_nation_id].Not(),
+                     plus_three_same_seven_club[card_club_id].Not(),
+                     plus_three_same_eight_more_league[card_league_id].Not()]).OnlyEnforceIf(
+                    at_least_three_boolean.Not())
 
                 one_chem_boolean = self._model.NewBoolVar(f"add_one_{i}")
                 two_chem_boolean = self._model.NewBoolVar(f"add_two_{i}")
@@ -341,17 +334,20 @@ class EaFcSbcSolver:
                 ).OnlyEnforceIf(two_variant_1)
 
                 self._model.AddBoolAnd(
-                    plus_one_same_two_club, plus_one_same_two_nation, at_least_two_boolean.Not(),
+                    plus_one_same_two_club[card_club_id], plus_one_same_two_nation[card_nation_id],
+                    at_least_two_boolean.Not(),
                     at_least_three_boolean.Not()
                 ).OnlyEnforceIf(two_variant_2)
 
                 self._model.AddBoolAnd(
-                    plus_one_same_three_league, plus_one_same_two_nation, at_least_two_boolean.Not(),
+                    plus_one_same_three_league[card_league_id], plus_one_same_two_nation[card_nation_id],
+                    at_least_two_boolean.Not(),
                     at_least_three_boolean.Not()
                 ).OnlyEnforceIf(two_variant_3)
 
                 self._model.AddBoolAnd(
-                    plus_one_same_three_league, plus_one_same_two_club, at_least_two_boolean.Not(),
+                    plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
+                    at_least_two_boolean.Not(),
                     at_least_three_boolean.Not()
                 ).OnlyEnforceIf(two_variant_4)
 
@@ -367,7 +363,8 @@ class EaFcSbcSolver:
                 three_variant_5 = self._model.NewBoolVar(f"{i}_three_variant_5")
 
                 self._model.AddBoolAnd(
-                    plus_one_same_three_league, plus_one_same_two_club, plus_one_same_two_nation
+                    plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
+                    plus_one_same_two_nation[card_nation_id]
                 ).OnlyEnforceIf(three_variant_1)
 
                 self._model.AddBoolAnd(
@@ -375,15 +372,15 @@ class EaFcSbcSolver:
                 ).OnlyEnforceIf(three_variant_2)
 
                 self._model.AddBoolAnd(
-                    plus_two_same_five_league, plus_two_same_five_nation
+                    plus_two_same_five_league[card_league_id], plus_two_same_five_nation[card_nation_id]
                 ).OnlyEnforceIf(three_variant_3)
 
                 self._model.AddBoolAnd(
-                    plus_two_same_four_club, plus_two_same_five_league
+                    plus_two_same_four_club[card_club_id], plus_two_same_five_league[card_league_id]
                 ).OnlyEnforceIf(three_variant_4)
 
                 self._model.AddBoolAnd(
-                    plus_two_same_four_club, plus_two_same_five_nation
+                    plus_two_same_four_club[card_club_id], plus_two_same_five_nation[card_nation_id]
                 ).OnlyEnforceIf(three_variant_5)
 
                 self._model.AddBoolOr(
