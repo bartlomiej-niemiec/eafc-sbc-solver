@@ -5,7 +5,7 @@ import pathlib
 here = pathlib.Path(__file__).parent.resolve()
 
 VERSION = '0.0.1'
-DESCRIPTION = 'EA FC 24 FUT players scraper'
+DESCRIPTION = 'EA FC 24 SBC solver'
 LONG_DESCRIPTION = (here / "README.md").read_text(encoding="utf-8")
 
 # Setting up
@@ -17,18 +17,25 @@ setup(
     author_email="<bniemiec11@gmail.com>",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
-    url="https://github.com/bartlomiej-niemiec/fut-players",
+    url="https://github.com/bartlomiej-niemiec/fc24-sbc-solver",
     packages=find_packages(where="src"),
     install_requires=[
-        "requests",
-        "beautifulsoup4",
-        "tqdm",
-        "pandas"
+        "ortools",
+        "pandas",
+        "sqlite3",
+        "sqlalchemy"
     ],  # add any additional packages that
     # needs to be installed along with your package. Eg: 'caer'
 
-    keywords=['python', 'eafc24', 'futwiz', 'ultimate team', 'file logging',
-              'multithreading', 'webscraping', 'proxy servers'],
+    keywords=[
+        'google or-tools',
+        'mixed-integer-programming',
+        'cp-sat',
+        'python',
+        'eafc24',
+        'ultimate team',
+        'sbc'
+    ],
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Development Status :: 3 - Alpha",

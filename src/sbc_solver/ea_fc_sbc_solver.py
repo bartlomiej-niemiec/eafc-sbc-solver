@@ -1,6 +1,7 @@
 from ortools.sat.python import cp_model
 from src.csv.csv_utils import CsvHeaders
 import src.sbc_solver.exceptions as SolverExceptions
+import time
 
 from typing import List
 
@@ -8,10 +9,11 @@ from typing import List
 class EaFcSbcSolver:
     _MAX_PLAYERS_IN_FORMATION = 11
 
-    def __init__(self, ea_fc_cards_df):
+    def __init__(self, ea_fc_cards_df, max_time_for_solution_s=100):
         self._model = cp_model.CpModel()
         self._solver = cp_model.CpSolver()
-        self._solver.parameters.num_workers = 4
+        self._solver.parameters.num_workers = 8
+        self._solver.parameters.max_time_in_seconds = max_time_for_solution_s
         self._ea_fc_cards_df = ea_fc_cards_df
 
         self._no_cards = len(ea_fc_cards_df)
@@ -355,6 +357,7 @@ class EaFcSbcSolver:
         )
 
     def solve(self):
+
         if not self._formation:
             raise SolverExceptions.IncorrectFormation("Formation is not set!")
 
@@ -368,30 +371,17 @@ class EaFcSbcSolver:
         )
 
         # Find solutions
+        start_time = time.time()
         self._solver.Solve(self._model)
-        self._solved = True
 
-    def print_solution(self):
-        sum_price = 0
-        sum_chemistry = 0
-        if self._solved:
-            for i in range(self._no_cards):
-                if self._solver.Value(self._cards_bools_vars[i]):
-                    sum_price += self._ea_fc_cards_df[CsvHeaders.Price].iloc[i]
-                    self._print_player(self._ea_fc_cards_df.iloc[i])
-                    sum_chemistry += self._solver.Value(self._player_chemistry[i])
-                    print(f"Chemistry: {self._solver.Value(self._player_chemistry[i])}")
-                    print('++++++++++++++++++++++++++++++++')
-            print(f"Final Price: {sum_price}")
-            print(f"Sum chemistry: {sum_chemistry}")
-
-    def get_players_in_solution(self):
         solution_players = None
-        if self._solved:
-            solution_players = [self._ea_fc_cards_df.iloc[i] for i in range(self._no_cards) if
-                                self._solver.Value(self._cards_bools_vars[i])]
+        solution_players = [self._ea_fc_cards_df.iloc[i] for i in range(self._no_cards) if
+                            self._solver.Value(self._cards_bools_vars[i])]
+        if solution_players:
+            print(f"SBC solved in: {time.time() - start_time}s")
 
         return solution_players
+
 
     def reset(self):
         ea_fc_cards_temp = self._ea_fc_cards_df
@@ -401,15 +391,6 @@ class EaFcSbcSolver:
         del self._no_cards
         del self._cards_bools_vars
         self.__init__(ea_fc_cards_temp)
-
-    def _print_player(self, player_df):
-        print(f"Futwiz Link: {player_df[CsvHeaders.FutwizLink]}")
-        print(f"Player Name: {player_df[CsvHeaders.Name]}")
-        print(f"Player Overall Rating: {player_df[CsvHeaders.OverallRating]}")
-        print(f"Card Price: {player_df[CsvHeaders.Price]}")
-        print(f"Card Version: {player_df[CsvHeaders.Version]}")
-        print(f"League: {player_df[CsvHeaders.League]}")
-        print(f"Nationality: {player_df[CsvHeaders.Nationality]}")
 
     def _get_map_attribute_to_number(self, attribute_list):
         map = {}
@@ -481,16 +462,3 @@ class EaFcSbcSolver:
                                            self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) *
                                  self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(
                 self._nationality_bools[i].Not())
-
-
-class ChemistryCalculator:
-
-    def __init__(self, plus_one_chem, plus_two_chem, plus_three_chem):
-        self._plus_one_chem = plus_one_chem
-        self._plus_two_chem = plus_two_chem
-        self._plus_three_chem = plus_three_chem
-
-    def get_chemistry(self, league_id, nation_id, club_id):
-        card_league_id = league_id
-        card_nation_id = nation_id
-        card_club_id = club_id

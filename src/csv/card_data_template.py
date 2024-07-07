@@ -1,11 +1,11 @@
 import csv
 
 
-class PlayerDataTemplateFactory:
+class CardDataTemplateFactory:
 
     @classmethod
     def create(cls, with_stats):
-        template_dict = GeneralPlayerData.get_dict_template()
+        template_dict = GeneralCardData.get_dict_template()
         if with_stats:
             template_dict.update(CommonPosStats.get_dict_template())
             template_dict.update(GkPosStats.get_dict_template())
@@ -13,7 +13,7 @@ class PlayerDataTemplateFactory:
         return template_dict
 
 
-class GeneralPlayerData:
+class GeneralCardData:
     Name = "Name"
     Version = "Version"
     Club = "Club"

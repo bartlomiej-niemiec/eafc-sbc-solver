@@ -1,16 +1,16 @@
 import pandas as pd
-from src.csv.player_data_template import PlayerDataTemplateFactory, does_file_include_player_stats, GeneralPlayerData, \
+from src.csv.card_data_template import CardDataTemplateFactory, does_file_include_player_stats, GeneralCardData, \
     GkPosStats, CommonPosStats
 
 
 def get_csv_content(filepath, delimiter=';'):
     with_player_stats = does_file_include_player_stats(filepath)
-    names = [key for key in PlayerDataTemplateFactory().create(with_player_stats).keys()]
-    dtypes = {key: str for key in PlayerDataTemplateFactory().create(with_player_stats).keys()}
+    names = [key for key in CardDataTemplateFactory().create(with_player_stats).keys()]
+    dtypes = {key: str for key in CardDataTemplateFactory().create(with_player_stats).keys()}
     return pd.read_csv(filepath, delimiter=delimiter, names=names, dtype=dtypes, skiprows=[0])
 
 
-class CsvHeaders(GeneralPlayerData, CommonPosStats, GkPosStats):
+class CsvHeaders(GeneralCardData, CommonPosStats, GkPosStats):
     pass
 
 
