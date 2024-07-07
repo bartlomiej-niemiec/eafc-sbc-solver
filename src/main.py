@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     sbc_solver = EaFcSbcSolver(players_df)
     start_time = time.time()
-    sbc_solver.set_formation(Formations["4-4-2"])
+    sbc_solver.set_formation(Formations["4-3-3"])
     sbc_solver.set_min_team_chemistry(25)
     sbc_solver.solve()
     sbc_solver.print_solution()

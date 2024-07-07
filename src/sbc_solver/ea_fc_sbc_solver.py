@@ -172,6 +172,8 @@ class EaFcSbcSolver:
         nation_arr = self._ea_fc_cards_df[CsvHeaders.Nationality].unique()
         nation_map_to_unique_id = self._get_map_attribute_to_number(nation_arr)
         nation_vars = [self._model.NewIntVar(0, self._no_players, f"Nation_{i}") for i in range(len(nation_arr))]
+        nation_chemistry = [self._model.NewIntVar(0, self._no_players, f"Nation_Chem_{i}") for i in range(len(nation_arr))]
+
         plus_one_same_two_nation = []
         plus_two_same_five_nation = []
         plus_three_same_eight_or_more_nations = []
@@ -204,10 +206,30 @@ class EaFcSbcSolver:
             self._model.Add(nation_vars[nation_id] < 8).OnlyEnforceIf(
                 plus_three_same_eight_or_more_nations[nation_id].Not())
 
+            self._model.Add(nation_chemistry[nation_id] == 0).OnlyEnforceIf([
+                plus_one_same_two_nation[nation_id].Not(),
+                plus_two_same_five_nation[nation_id].Not(),
+                plus_two_same_five_nation[nation_id].Not()
+            ])
+
+            self._model.Add(nation_chemistry[nation_id] == 1).OnlyEnforceIf(
+                plus_one_same_two_nation[nation_id]
+            )
+
+            self._model.Add(nation_chemistry[nation_id] == 2).OnlyEnforceIf(
+                plus_two_same_five_nation[nation_id]
+            )
+
+            self._model.Add(nation_chemistry[nation_id] == 3).OnlyEnforceIf(
+                plus_two_same_five_nation[nation_id]
+            )
+
         # LEAGUES
         leagues_arr = self._ea_fc_cards_df[CsvHeaders.League].unique()
         league_map_to_unique_id = self._get_map_attribute_to_number(leagues_arr)
         league_vars = [self._model.NewIntVar(0, self._no_players, f"League_{i}") for i in range(len(leagues_arr))]
+        league_chemistry = [self._model.NewIntVar(0, self._no_players, f"League_Chem_{i}") for i in
+                            range(len(leagues_arr))]
 
         plus_one_same_three_league = []
         plus_two_same_five_league = []
@@ -240,10 +262,26 @@ class EaFcSbcSolver:
             self._model.Add(league_vars[league_id] < 8).OnlyEnforceIf(
                 plus_three_same_eight_more_league[league_id].Not())
 
+            self._model.Add(league_chemistry[league_id] == 0).OnlyEnforceIf([
+                plus_one_same_three_league[league_id].Not(),
+                plus_two_same_five_league[league_id].Not(),
+                plus_three_same_eight_more_league[league_id].Not()
+            ])
+            self._model.Add(league_chemistry[league_id] == 1).OnlyEnforceIf(
+                plus_one_same_three_league[league_id]
+            )
+            self._model.Add(league_chemistry[league_id] == 2).OnlyEnforceIf(
+                plus_two_same_five_league[league_id]
+            )
+            self._model.Add(league_chemistry[league_id] == 3).OnlyEnforceIf(
+                plus_three_same_eight_more_league[league_id]
+            )
+
         # CLUBS
         clubs_arr = self._ea_fc_cards_df[CsvHeaders.Club].unique()
         clubs_map_to_unique_id = self._get_map_attribute_to_number(clubs_arr)
         clubs_vars = [self._model.NewIntVar(0, self._no_players, f"Club_{i}") for i in range(len(clubs_arr))]
+        club_chemistry = [self._model.NewIntVar(0, self._no_players, f"Club_Chem_{i}") for i in range(len(clubs_arr))]
 
         plus_one_same_two_club = []
         plus_two_same_four_club = []
@@ -271,6 +309,14 @@ class EaFcSbcSolver:
             self._model.Add(clubs_vars[club_id] < 7).OnlyEnforceIf(
                 plus_three_same_seven_club[club_id].Not())
 
+            self._model.Add(club_chemistry[club_id] == 0).OnlyEnforceIf([plus_one_same_two_club[club_id].Not(),
+                                                                         plus_two_same_four_club[club_id].Not(),
+                                                                         plus_three_same_seven_club[club_id].Not()]
+                                                                        )
+            self._model.Add(club_chemistry[club_id] == 1).OnlyEnforceIf(plus_one_same_two_club[club_id])
+            self._model.Add(club_chemistry[club_id] == 2).OnlyEnforceIf(plus_two_same_four_club[club_id])
+            self._model.Add(club_chemistry[club_id] == 3).OnlyEnforceIf(plus_three_same_seven_club[club_id])
+
         for i in range(self._no_cards):
 
             if self._ea_fc_cards_df[CsvHeaders.Position].iloc[i] not in self._formation:
@@ -281,140 +327,11 @@ class EaFcSbcSolver:
                 card_nation_id = nation_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[i]]
                 card_club_id = clubs_map_to_unique_id[self._ea_fc_cards_df[CsvHeaders.Club].iloc[i]]
 
-                at_least_one_boolean = self._model.NewBoolVar(f"add_one_{i}")
-                at_least_two_boolean = self._model.NewBoolVar(f"add_two_{i}")
-                at_least_three_boolean = self._model.NewBoolVar(f"add_three_{i}")
-
-                self._model.AddBoolOr(
-                    [plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
-                     plus_one_same_two_nation[card_nation_id]]).OnlyEnforceIf(
-                    at_least_one_boolean)
-
-                self._model.AddBoolAnd(
-                    [plus_one_same_three_league[card_league_id].Not(), plus_one_same_two_club[card_club_id].Not(),
-                     plus_one_same_two_nation[card_nation_id].Not()]).OnlyEnforceIf(at_least_one_boolean.Not())
-
-                self._model.AddBoolOr(
-                    [plus_two_same_four_club[card_club_id], plus_two_same_five_league[card_league_id],
-                     plus_two_same_five_nation[card_nation_id]]).OnlyEnforceIf(
-                    at_least_two_boolean)
-
-                self._model.AddBoolAnd(
-                    [plus_two_same_four_club[card_club_id].Not(), plus_two_same_five_league[card_league_id].Not(),
-                     plus_two_same_five_nation[card_nation_id].Not()]).OnlyEnforceIf(at_least_two_boolean.Not())
-
-                self._model.AddBoolOr(
-                    [plus_three_same_eight_or_more_nations[card_nation_id], plus_three_same_seven_club[card_club_id],
-                     plus_three_same_eight_more_league[card_league_id]]).OnlyEnforceIf(at_least_three_boolean)
-
-                self._model.AddBoolAnd(
-                    [plus_three_same_eight_or_more_nations[card_nation_id].Not(),
-                     plus_three_same_seven_club[card_club_id].Not(),
-                     plus_three_same_eight_more_league[card_league_id].Not()]).OnlyEnforceIf(
-                    at_least_three_boolean.Not())
-
-                one_chem_boolean = self._model.NewBoolVar(f"add_one_{i}")
-                two_chem_boolean = self._model.NewBoolVar(f"add_two_{i}")
-                three_chem_boolean = self._model.NewBoolVar(f"add_three_{i}")
-
-                # 1 CHEMISTRY
-                self._model.AddBoolAnd(
-                    at_least_one_boolean, at_least_two_boolean.Not(), at_least_three_boolean.Not()).OnlyEnforceIf(
-                    one_chem_boolean)
-
-                # 2 Chemistry
-
-                two_variant_1 = self._model.NewBoolVar(f"{i}_two_variant_1")
-                two_variant_2 = self._model.NewBoolVar(f"{i}_two_variant_2")
-                two_variant_3 = self._model.NewBoolVar(f"{i}_two_variant_3")
-                two_variant_4 = self._model.NewBoolVar(f"{i}_two_variant_4")
-
-                self._model.AddBoolAnd(
-                    at_least_one_boolean.Not(), at_least_two_boolean, at_least_three_boolean.Not()
-                ).OnlyEnforceIf(two_variant_1)
-
-                self._model.AddBoolAnd(
-                    plus_one_same_two_club[card_club_id], plus_one_same_two_nation[card_nation_id],
-                    at_least_two_boolean.Not(),
-                    at_least_three_boolean.Not()
-                ).OnlyEnforceIf(two_variant_2)
-
-                self._model.AddBoolAnd(
-                    plus_one_same_three_league[card_league_id], plus_one_same_two_nation[card_nation_id],
-                    at_least_two_boolean.Not(),
-                    at_least_three_boolean.Not()
-                ).OnlyEnforceIf(two_variant_3)
-
-                self._model.AddBoolAnd(
-                    plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
-                    at_least_two_boolean.Not(),
-                    at_least_three_boolean.Not()
-                ).OnlyEnforceIf(two_variant_4)
-
-                self._model.AddBoolOr(
-                    two_variant_1, two_variant_2, two_variant_3, two_variant_4
-                ).OnlyEnforceIf(two_chem_boolean)
-
-                # 3 CHEMISTRY
-                three_variant_1 = self._model.NewBoolVar(f"{i}_three_variant_1")
-                three_variant_2 = self._model.NewBoolVar(f"{i}_three_variant_2")
-                three_variant_3 = self._model.NewBoolVar(f"{i}_three_variant_3")
-                three_variant_4 = self._model.NewBoolVar(f"{i}_three_variant_4")
-                three_variant_5 = self._model.NewBoolVar(f"{i}_three_variant_5")
-
-                self._model.AddBoolAnd(
-                    plus_one_same_three_league[card_league_id], plus_one_same_two_club[card_club_id],
-                    plus_one_same_two_nation[card_nation_id]
-                ).OnlyEnforceIf(three_variant_1)
-
-                self._model.AddBoolAnd(
-                    at_least_one_boolean, at_least_two_boolean
-                ).OnlyEnforceIf(three_variant_2)
-
-                self._model.AddBoolAnd(
-                    plus_two_same_five_league[card_league_id], plus_two_same_five_nation[card_nation_id]
-                ).OnlyEnforceIf(three_variant_3)
-
-                self._model.AddBoolAnd(
-                    plus_two_same_four_club[card_club_id], plus_two_same_five_league[card_league_id]
-                ).OnlyEnforceIf(three_variant_4)
-
-                self._model.AddBoolAnd(
-                    plus_two_same_four_club[card_club_id], plus_two_same_five_nation[card_nation_id]
-                ).OnlyEnforceIf(three_variant_5)
-
-                self._model.AddBoolOr(
-                    three_variant_1,
-                    at_least_three_boolean,
-                    three_variant_2,
-                    three_variant_3,
-                    three_variant_4,
-                    three_variant_5
-                ).OnlyEnforceIf(three_chem_boolean)
-
                 # Player Chemistry
+                self._model.Add(self._player_chemistry[i] == club_chemistry[card_club_id] + league_chemistry[card_league_id] + nation_chemistry[card_nation_id]).OnlyEnforceIf(self._cards_bools_vars[i])
+                self._model.Add(self._player_chemistry[i] == 0).OnlyEnforceIf(self._cards_bools_vars[i].Not())
 
-                # 0 Chemistry
-                self._model.Add(self._player_chemistry[i] == 0).OnlyEnforceIf(
-                    one_chem_boolean.Not(), two_chem_boolean.Not(), three_chem_boolean.Not()
-                )
-                self._model.Add(self._player_chemistry[i] == 0).OnlyEnforceIf(
-                    self._cards_bools_vars[i].Not()
-                )
-                self._model.Add(self._player_chemistry[i] == 1).OnlyEnforceIf(
-                    one_chem_boolean, self._cards_bools_vars[i], two_chem_boolean.Not(), three_chem_boolean.Not()
-                )
-                self._model.Add(self._player_chemistry[i] == 2).OnlyEnforceIf(
-                    two_chem_boolean, self._cards_bools_vars[i], three_chem_boolean.Not()
-                )
-                self._model.Add(self._player_chemistry[i] == 3).OnlyEnforceIf(
-                    three_chem_boolean, self._cards_bools_vars[i]
-                )
-                self._model.Add(self._player_chemistry[i] == 3).OnlyEnforceIf(
-                    one_chem_boolean, two_chem_boolean, self._cards_bools_vars[i]
-                )
-
-        self._model.add(cp_model.LinearExpr.Sum(self._player_chemistry) >= chemistry)
+        self._model.Add(cp_model.LinearExpr.Sum(self._player_chemistry) >= chemistry)
 
     def set_min_overall_of_squad(self, overall):
         if not (0 <= overall <= 99):
@@ -564,3 +481,16 @@ class EaFcSbcSolver:
                                            self._ea_fc_cards_df[CsvHeaders.Nationality].iloc[j]] == i else 0) *
                                  self._cards_bools_vars[j] for j in range(self._no_cards)]) == 0).OnlyEnforceIf(
                 self._nationality_bools[i].Not())
+
+
+class ChemistryCalculator:
+
+    def __init__(self, plus_one_chem, plus_two_chem, plus_three_chem):
+        self._plus_one_chem = plus_one_chem
+        self._plus_two_chem = plus_two_chem
+        self._plus_three_chem = plus_three_chem
+
+    def get_chemistry(self, league_id, nation_id, club_id):
+        card_league_id = league_id
+        card_nation_id = nation_id
+        card_club_id = club_id
