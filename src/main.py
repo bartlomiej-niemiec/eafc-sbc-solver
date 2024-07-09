@@ -1,30 +1,18 @@
-import pathlib
-from src.csv.csv_utils import get_csv_content, preprocess_csv_data
+from data.dataset_factory import DatasetFactory, DatasetSources
 from src.sbc_solver.ea_fc_sbc_solver import EaFcSbcSolver
 from src.utils.formations import Formations
-from src.csv.csv_utils import CsvHeaders
-
-
-def print_card(card):
-    print("====================================================")
-    print(f"| Name    : {card[CsvHeaders.Name]}                |")
-    print(f"| Rating  : {card[CsvHeaders.OverallRating]}       |")
-    print(f"| Position: {card[CsvHeaders.Position]}            |")
-    print(f"| Nationality: {card[CsvHeaders.Nationality]}      |")
-    print(f"| League: {card[CsvHeaders.League]}                |")
-    print("====================================================")
+from src.solution_display.console_display import SbcSolutionConsoleDisplay
 
 
 if __name__ == "__main__":
-    CSV_FILENAME = "fut_players.csv"
-    CSV_FILEPATH = pathlib.Path(__file__).parent.parent.resolve().joinpath('data').joinpath(CSV_FILENAME)
 
-    players_df = get_csv_content(CSV_FILEPATH)
-    preprocess_csv_data(players_df)
+    dataset = DatasetFactory.create(DatasetSources.CSV)
 
-    sbc_solver = EaFcSbcSolver(players_df)
-    sbc_solver.set_formation(Formations["4-1-3-2"])
-    sbc_solver.set_min_team_chemistry(22)
+    formation = Formations["4-1-3-2"]
+
+    sbc_solver = EaFcSbcSolver(dataset)
+    sbc_solver.set_formation(formation)
     sbc_cards = sbc_solver.solve()
-    for card in sbc_cards:
-        print_card(card)
+
+    solution_display = SbcSolutionConsoleDisplay(sbc_cards, formation)
+    solution_display.display()

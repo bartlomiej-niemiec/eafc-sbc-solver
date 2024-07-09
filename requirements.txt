@@ -2,3 +2,4 @@ ortools
 pandas
 sqlite3
 sqlalchemy
+prettytable

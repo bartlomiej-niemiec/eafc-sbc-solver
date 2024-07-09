@@ -2,6 +2,7 @@ from ortools.sat.python import cp_model
 from src.csv.csv_utils import CsvHeaders
 import src.sbc_solver.exceptions as SolverExceptions
 import time
+import pandas as pd
 
 from typing import List
 
@@ -374,14 +375,21 @@ class EaFcSbcSolver:
         start_time = time.time()
         self._solver.Solve(self._model)
 
-        solution_players = None
-        solution_players = [self._ea_fc_cards_df.iloc[i] for i in range(self._no_cards) if
+        solution_cards_df = None
+        solution_cards_indexes = [i for i in range(self._no_cards) if
                             self._solver.Value(self._cards_bools_vars[i])]
-        if solution_players:
+        if solution_cards_indexes:
+            solution_cards_df = self._generate_solution_df(solution_cards_indexes)
             print(f"SBC solved in: {time.time() - start_time}s")
 
-        return solution_players
+        return solution_cards_df
 
+    def _generate_solution_df(self, indexes):
+        solution_df = pd.DataFrame(
+            columns=self._ea_fc_cards_df.columns,
+            data=[self._ea_fc_cards_df.iloc[index] for index in indexes]
+        )
+        return solution_df
 
     def reset(self):
         ea_fc_cards_temp = self._ea_fc_cards_df

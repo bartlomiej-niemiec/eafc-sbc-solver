@@ -23,7 +23,8 @@ setup(
         "ortools",
         "pandas",
         "sqlite3",
-        "sqlalchemy"
+        "sqlalchemy",
+        "prettytable"
     ],  # add any additional packages that
     # needs to be installed along with your package. Eg: 'caer'
 
