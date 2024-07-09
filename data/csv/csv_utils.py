@@ -1,5 +1,5 @@
 import pandas as pd
-from src.csv.card_data_template import CardDataTemplateFactory, does_file_include_player_stats, GeneralCardData, \
+from data.csv.card_data_template import CardDataTemplateFactory, does_file_include_player_stats, GeneralCardData, \
     GkPosStats, CommonPosStats
 
 

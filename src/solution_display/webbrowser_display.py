@@ -1,5 +1,5 @@
 import webbrowser
-from src.csv.csv_utils import CsvHeaders
+from data.csv.csv_utils import CsvHeaders
 from src.solution_display.sbc_solution_display_if import SbcSolutionDisplayIf
 
 

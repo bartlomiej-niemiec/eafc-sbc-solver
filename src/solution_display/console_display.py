@@ -1,6 +1,6 @@
 from src.solution_display.sbc_solution_display_if import SbcSolutionDisplayIf
 from prettytable import PrettyTable
-from src.csv.csv_utils import CsvHeaders
+from data.csv.csv_utils import CsvHeaders
 
 
 class SbcSolutionConsoleDisplay(SbcSolutionDisplayIf):

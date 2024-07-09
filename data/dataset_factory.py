@@ -1,6 +1,6 @@
 import pathlib
 from enum import IntEnum
-from src.csv.csv_utils import get_csv_content, preprocess_csv_data
+from data.csv.csv_utils import get_csv_content, preprocess_csv_data
 
 
 class DatasetSources(IntEnum):
@@ -21,7 +21,7 @@ class DatasetFactory:
 
     @classmethod
     def _get_dataset_from_csv(cls):
-        CSV_FILENAME = "fut_players.csv"
+        CSV_FILENAME = "csv/fut_players.csv"
         CSV_FILEPATH = pathlib.Path(__file__).parent.joinpath(CSV_FILENAME)
         dataset = get_csv_content(CSV_FILEPATH)
         preprocess_csv_data(dataset)

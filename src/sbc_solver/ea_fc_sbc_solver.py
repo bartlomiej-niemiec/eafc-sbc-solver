@@ -1,5 +1,5 @@
 from ortools.sat.python import cp_model
-from src.csv.csv_utils import CsvHeaders
+from data.csv.csv_utils import CsvHeaders
 import src.sbc_solver.exceptions as SolverExceptions
 import time
 import pandas as pd
