@@ -1,4 +1,4 @@
-# FC24 Ultimate Team SBC solver
+# EAFC Ultimate Team SBC solver
 This repository contains script for solving SBC (Squad Building Challenges) in optimize way by selecting cards which they overall price is the lowest.
 Squad Building Challenges consist in building squad of ultimate team cards that fulfill given requirements.
 For solving SBC challenges player can earn rewards to use in ultimate team - cards, packs etc.
