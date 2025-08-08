@@ -8,10 +8,14 @@ if __name__ == "__main__":
 
     dataset = DatasetFactory.create(DatasetSources.CSV)
 
-    formation = Formations["4-1-3-2"]
+    formation = Formations["4-4-2"]
 
-    sbc_solver = EaFcSbcSolver(dataset)
-    sbc_solver.set_formation(formation)
+    sbc_solver = EaFcSbcSolver(dataset, formation)
+    sbc_solver.set_min_unique_leagues(5)
+    sbc_solver.set_min_overall_of_squad(80)
+    sbc_solver.set_min_rare_cards(2)
+    sbc_solver.set_min_team_chemistry(5)
+    sbc_solver.set_min_unique_nations(5)
     sbc_cards = sbc_solver.solve()
 
     solution_display = SbcSolutionConsoleDisplay(sbc_cards, formation)

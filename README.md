@@ -30,8 +30,7 @@ if __name__ == "__main__":
 
     formation = Formations["4-1-3-2"]
 
-    sbc_solver = EaFcSbcSolver(dataset)
-    sbc_solver.set_formation(formation)
+    sbc_solver = EaFcSbcSolver(dataset, formation)
     sbc_cards = sbc_solver.solve()
 
     solution_display = SbcSolutionConsoleDisplay(sbc_cards, formation)
@@ -63,7 +62,6 @@ SBC solved in: 19.32286834716797s
 
 ## What requirements can be input to the solver?
 
-+ set_formation() - set formation of squad - REQUIRED!
 + set_min_overall_of_squad() - minimum overall rating of squad,
 + set_min_cards_with_overall() - mininum no. players with given rating,
 + set_min_team_chemistry() - minimum squad chemistry,
